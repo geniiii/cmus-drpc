@@ -38,6 +38,7 @@ def main():
 
         duration = metadata['mpris:length']
         position = remote_object.Position
+        status = remote_object.PlaybackStatus
 
         duration = str(datetime.timedelta(microseconds=int(duration)))
         position = str(datetime.timedelta(microseconds=int(position)))
@@ -58,7 +59,7 @@ def main():
             track = "?"
 
         artist_track = "{} - {}".format(artist_string, track)
-        position_duration = "{}/{}".format(position, duration)
+        position_duration = "{} ({}/{})".format(status, position, duration)
 
         client = ipc.DiscordIPC("407579153060331521")
         client.connect()
