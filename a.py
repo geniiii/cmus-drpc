@@ -1,6 +1,7 @@
 from discoIPC import ipc
 from pydbus import SessionBus
 from gi.repository.GLib import Error
+from os import path
 
 import subprocess
 import datetime
@@ -39,6 +40,8 @@ def main():
         duration = metadata['mpris:length']
         position = remote_object.Position
         status = remote_object.PlaybackStatus
+        # you might want to comment this out if you're not using my cmus fork
+        file_path = metadata['cmus:filename']
 
         duration = str(datetime.timedelta(microseconds=int(duration)))
         position = str(datetime.timedelta(microseconds=int(position)))
@@ -56,7 +59,9 @@ def main():
         try:
             track = metadata['xesam:title']
         except KeyError:
-            track = "?"
+            # track = "?"        - you might want to enable this if you're not using my cmus fork
+            _, file_name = path.split(file_path)
+            track = file_name.rsplit('.', 1)[0]
 
         artist_track = "{} - {}".format(artist_string, track)
         position_duration = "{} ({}/{})".format(status, position, duration)
