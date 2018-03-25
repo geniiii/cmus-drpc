@@ -42,6 +42,7 @@ def main():
         status = remote_object.PlaybackStatus
         # you might want to comment this out if you're not using my cmus fork
         file_path = metadata['cmus:file_path']
+        icon = 'playing'
 
         duration = str(datetime.timedelta(microseconds=int(duration)))
         position = str(datetime.timedelta(microseconds=int(position)))
