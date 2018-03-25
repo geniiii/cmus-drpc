@@ -41,15 +41,21 @@ def main():
         except Error as ex:
             if ex.args[0] == 'GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name org.mpris.MediaPlayer2.cmus was not provided by any .service files':
                 print("cmus is compiled without mpris support or is not running")
-                return
+                time.sleep(10)
+                continue
 
         metadata = remote_object.Metadata
 
-        if metadata['mpris:length'] != duration:
-            duration = metadata['mpris:length']
-            position = remote_object.Position
-            duration = int(time.time() + duration / 1000000)
-            position = int(time.time() + position / 1000000)
+        try:
+            if metadata['mpris:length'] != duration:
+                duration = metadata['mpris:length']
+                position = remote_object.Position
+                duration = int(time.time() + duration / 1000000)
+                position = int(time.time() + position / 1000000)
+        except KeyError:
+            print("no song is playing or timing failed. sleeping for 5 seconds...")
+            time.sleep(5)
+            continue
 
         kbps = "{} kbps".format(str(metadata['cmus:bitrate'])[:-3])
 
