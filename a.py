@@ -1,3 +1,4 @@
+#!/bin/python3
 from discoIPC import ipc
 from pydbus import SessionBus
 from gi.repository.GLib import Error
@@ -8,14 +9,19 @@ import datetime
 import time
 
 
-def update_presence(details: str, state: str, icon: str):
+def update_presence(details: str, state: str, icon: str, status: str, end: int):
     activity = {
         'details': details,
         'state': state,
-        'timestamps': {},
+        'timestamps': {
+            'start': int(time.time()),
+            'end': int(time.time()) + end
+        },
         'assets': {
             'large_image': 'cmus',
             'small_image': icon,
+            'large_text': 'cmus',
+            'small_text': status
         }
     }
     return activity
@@ -39,13 +45,16 @@ def main():
 
         duration = metadata['mpris:length']
         position = remote_object.Position
+
+        kbps = "{} kbps".format(str(metadata['cmus:bitrate'])[:-3])
+
         status = remote_object.PlaybackStatus
-        # you might want to comment this out if you're not using my cmus fork
+
         file_path = metadata['cmus:file_path']
         icon = 'playing'
 
-        duration = str(datetime.timedelta(microseconds=int(duration)))
-        position = str(datetime.timedelta(microseconds=int(position)))
+        duration = int(time.time() + duration / 1000000)
+        position = int(time.time() + position / 1000000)
 
         artist_string = ""
         try:
@@ -60,12 +69,12 @@ def main():
         try:
             track = metadata['xesam:title']
         except KeyError:
-            # track = "?"        - you might want to enable this if you're not using my cmus fork
             _, file_name = path.split(file_path)
             track = file_name.rsplit('.', 1)[0]
 
         artist_track = "{} - {}".format(artist_string, track)
-        position_duration = "{} ({}/{})".format(status, position, duration)
+        #position_duration = "{}/{}, {}".format(position, duration, kbps)
+        position_duration = "{}".format(kbps)
 
         client = ipc.DiscordIPC("407579153060331521")
         client.connect()
@@ -74,7 +83,7 @@ def main():
             icon = 'paused'
 
         client.update_activity(update_presence(
-            position_duration, artist_track, icon))
+            artist_track, position_duration, icon, status, duration - position))
 
         time.sleep(15)
 
