@@ -8,14 +8,14 @@ import datetime
 import time
 
 
-def update_presence(details: str, state: str):
+def update_presence(details: str, state: str, icon: str):
     activity = {
         'details': details,
         'state': state,
         'timestamps': {},
         'assets': {
-            'large_image': 'jesus',
-            'small_image': 'god',
+            'large_image': 'cmus',
+            'small_image': icon,
         }
     }
     return activity
@@ -42,6 +42,7 @@ def main():
         status = remote_object.PlaybackStatus
         # you might want to comment this out if you're not using my cmus fork
         file_path = metadata['cmus:filename']
+        icon = 'playing'
 
         duration = str(datetime.timedelta(microseconds=int(duration)))
         position = str(datetime.timedelta(microseconds=int(position)))
@@ -69,8 +70,11 @@ def main():
         client = ipc.DiscordIPC("407579153060331521")
         client.connect()
 
+        if status == 'Paused':
+            icon = 'paused'
+
         client.update_activity(update_presence(
-            position_duration, artist_track))
+            position_duration, artist_track, icon))
 
         time.sleep(15)
 
