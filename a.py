@@ -73,7 +73,7 @@ def main():
             track = file_name.rsplit('.', 1)[0]
 
         artist_track = "{} - {}".format(artist_string, track)
-        #position_duration = "{}/{}, {}".format(position, duration, kbps)
+
         position_duration = "{}".format(kbps)
 
         client = ipc.DiscordIPC("407579153060331521")
