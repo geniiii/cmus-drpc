@@ -29,6 +29,8 @@ def update_presence(details: str, state: str, icon: str, status: str, end: int):
 
 def main():
     bus = SessionBus()
+    duration = 0
+    position = 0
 
     while True:
         try:
@@ -43,8 +45,11 @@ def main():
 
         metadata = remote_object.Metadata
 
-        duration = metadata['mpris:length']
-        position = remote_object.Position
+        if metadata['mpris:length'] != duration:
+            duration = metadata['mpris:length']
+            position = remote_object.Position
+            duration = int(time.time() + duration / 1000000)
+            position = int(time.time() + position / 1000000)
 
         kbps = "{} kbps".format(str(metadata['cmus:bitrate'])[:-3])
 
@@ -52,9 +57,6 @@ def main():
 
         file_path = metadata['cmus:file_path']
         icon = 'playing'
-
-        duration = int(time.time() + duration / 1000000)
-        position = int(time.time() + position / 1000000)
 
         artist_string = ""
         try:
@@ -74,7 +76,7 @@ def main():
 
         artist_track = "{} - {}".format(artist_string, track)
 
-        position_duration = "{}".format(kbps)
+        position_duration = "{}, {}".format(status, kbps)
 
         client = ipc.DiscordIPC("407579153060331521")
         client.connect()
