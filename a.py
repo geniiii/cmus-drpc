@@ -34,8 +34,6 @@ def update_presence(details: str, state: str, icon: str, status: str, end: int, 
 
 def main():
     bus = SessionBus()
-    duration = 0
-    position = 0
 
     while True:
         try:
@@ -45,34 +43,37 @@ def main():
             )
         except Error as ex:
             if ex.args[0] == 'GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name org.mpris.MediaPlayer2.cmus was not provided by any .service files':
-                print("cmus is compiled without mpris support or is not running")
+                print(
+                    "cmus is compiled without mpris support or is not running, sleeping for 10s...")
                 time.sleep(10)
                 continue
 
         metadata = remote_object.Metadata
         status = remote_object.PlaybackStatus
 
-        pause = False
+        paused = False
+        icon = 'playing'
+        duration = 0
 
         try:
             if metadata['mpris:length'] != duration and status != 'Paused':
-                duration = metadata['mpris:length']
-                position = remote_object.Position
-                duration = int(time.time() + duration / 1000000)
-                position = int(time.time() + position / 1000000)
+                duration = int(
+                    time.time() + metadata['mpris:length'] / 1000000)
+                position = int(time.time() + remote_object.Position / 1000000)
             elif status == 'Paused':
-                pause = True
+                paused = True
         except KeyError:
             print("no song is playing or timing failed. sleeping for 5 seconds...")
             time.sleep(5)
             continue
 
-        kbps = "{} kbps".format(str(metadata['cmus:bitrate'])[:-3])
+        try:
+            kbps = "{} kbps".format(str(metadata['cmus:bitrate'])[:-3])
+            file_path = metadata['cmus:file_path']
+        except KeyError:
+            print("hey!! your cmus version isn't my fork!!")
+            return
 
-        file_path = metadata['cmus:file_path']
-        icon = 'playing'
-
-        artist_string = ""
         try:
             artists = metadata['xesam:artist']
             if len(artists) > 1:
@@ -90,7 +91,7 @@ def main():
 
         artist_track = "{} - {}".format(artist_string, track)
 
-        position_duration = "{}, {}".format(status, kbps)
+        status_kbps = "{}, {}".format(status, kbps)
 
         client = ipc.DiscordIPC("407579153060331521")
         client.connect()
@@ -99,7 +100,7 @@ def main():
             icon = 'paused'
 
         client.update_activity(update_presence(
-            artist_track, position_duration, icon, status, duration - position, pause))
+            artist_track, status_kbps, icon, status, duration - position, paused))
 
         time.sleep(15)
 
