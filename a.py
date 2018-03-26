@@ -9,14 +9,19 @@ import datetime
 import time
 
 
-def update_presence(details: str, state: str, icon: str, status: str, end: int):
+def update_presence(details: str, state: str, icon: str, status: str, end: int, pause: bool):
+    if pause:
+        timestamp = {}
+    else:
+        timestamp = {
+            'start': int(time.time()),
+            'end': int(time.time()) + end
+        }
+
     activity = {
         'details': details,
         'state': state,
-        'timestamps': {
-            'start': int(time.time()),
-            'end': int(time.time()) + end
-        },
+        'timestamps': timestamp,
         'assets': {
             'large_image': 'cmus',
             'small_image': icon,
@@ -45,21 +50,24 @@ def main():
                 continue
 
         metadata = remote_object.Metadata
+        status = remote_object.PlaybackStatus
+
+        pause = False
 
         try:
-            if metadata['mpris:length'] != duration:
+            if metadata['mpris:length'] != duration and status != 'Paused':
                 duration = metadata['mpris:length']
                 position = remote_object.Position
                 duration = int(time.time() + duration / 1000000)
                 position = int(time.time() + position / 1000000)
+            elif status == 'Paused':
+                pause = True
         except KeyError:
             print("no song is playing or timing failed. sleeping for 5 seconds...")
             time.sleep(5)
             continue
 
         kbps = "{} kbps".format(str(metadata['cmus:bitrate'])[:-3])
-
-        status = remote_object.PlaybackStatus
 
         file_path = metadata['cmus:file_path']
         icon = 'playing'
@@ -91,7 +99,7 @@ def main():
             icon = 'paused'
 
         client.update_activity(update_presence(
-            artist_track, position_duration, icon, status, duration - position))
+            artist_track, position_duration, icon, status, duration - position, pause))
 
         time.sleep(15)
 
