@@ -9,27 +9,59 @@ import datetime
 import time
 
 
-def update_presence(details: str, state: str, icon: str, status: str, end: int, pause: bool):
-    if pause:
+def update_presence(data: dict):
+    if data['timestamp'] is False:
         timestamp = {}
     else:
         timestamp = {
             'start': int(time.time()),
-            'end': int(time.time()) + end
+            'end': int(time.time()) + data['timestamp']
         }
 
     activity = {
-        'details': details,
-        'state': state,
+        'details': data['artist_track'],
+        'state': data['status_kbps'],
         'timestamps': timestamp,
         'assets': {
             'large_image': 'cmus',
-            'small_image': icon,
+            'small_image': data['icon'],
             'large_text': 'cmus',
-            'small_text': status
+            'small_text': data['status']
         }
     }
     return activity
+
+
+def loop_check(loop: str):
+    if loop == 'None':
+        loop = False
+    elif loop == 'Track':
+        loop = 'Looping Track'
+    else:
+        loop = 'Looping Playlist'
+    return loop
+
+
+def status_kbps_string(loop, kbps: int, status: str):
+    if loop != False:
+        status_kbps = '{}, {}, {}'.format(status, kbps, loop)
+    else:
+        status_kbps = '{}, {}'.format(status, kbps)
+    return status_kbps
+
+
+def song_file_path(file_path: str):
+    _, file_name = path.split(file_path)
+    track = file_name.rsplit('.', 1)[0]
+    return track
+
+
+def artist_string(artists):
+    if len(artists) > 1:
+        artist_string = ', '.join(map(str, artists))
+    else:
+        artist_string = artists[0]
+    return artist_string
 
 
 def main():
@@ -38,18 +70,19 @@ def main():
     while True:
         try:
             remote_object = bus.get(
-                "org.mpris.MediaPlayer2.cmus",
-                "/org/mpris/MediaPlayer2"
+                'org.mpris.MediaPlayer2.cmus',
+                '/org/mpris/MediaPlayer2'
             )
         except Error as ex:
             if ex.args[0] == 'GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name org.mpris.MediaPlayer2.cmus was not provided by any .service files':
                 print(
-                    "cmus is compiled without mpris support or is not running, sleeping for 10s...")
+                    'cmus is compiled without mpris support or is not running, sleeping for 10s...')
                 time.sleep(10)
                 continue
 
         metadata = remote_object.Metadata
         status = remote_object.PlaybackStatus
+        loop = loop_check(remote_object.LoopStatus)
 
         paused = False
         icon = 'playing'
@@ -63,44 +96,44 @@ def main():
             elif status == 'Paused':
                 paused = True
         except KeyError:
-            print("no song is playing or timing failed. sleeping for 5 seconds...")
+            print('no song is playing or timing failed, sleeping for 5 seconds...')
             time.sleep(5)
             continue
 
         try:
-            kbps = "{} kbps".format(str(metadata['cmus:bitrate'])[:-3])
-            file_path = metadata['cmus:file_path']
+            kbps = '{} kbps'.format(str(metadata['cmus:bitrate'])[:-3])
         except KeyError:
             print("hey!! your cmus version isn't my fork!!")
-            return
 
         try:
-            artists = metadata['xesam:artist']
-            if len(artists) > 1:
-                artist_string = ", ".join(map(str, artists))
-            else:
-                artist_string = artists[0]
+            artist = artist_string(metadata['xesam:artists'])
         except KeyError:
-            artist_string = "?"
+            artist = '?'
 
         try:
-            track = metadata['xesam:title']
+            track = metadata['xesam:track']
         except KeyError:
-            _, file_name = path.split(file_path)
-            track = file_name.rsplit('.', 1)[0]
+            track = song_file_path(metadata['cmus:file_path'])
 
-        artist_track = "{} - {}".format(artist_string, track)
+        artist_track = '{} - {}'.format(artist, track)
+        status_kbps = status_kbps_string(loop, kbps, status)
 
-        status_kbps = "{}, {}".format(status, kbps)
-
-        client = ipc.DiscordIPC("407579153060331521")
+        client = ipc.DiscordIPC('407579153060331521')
         client.connect()
 
         if status == 'Paused':
             icon = 'paused'
 
-        client.update_activity(update_presence(
-            artist_track, status_kbps, icon, status, duration - position, paused))
+        data = {
+            'artist_track': artist_track,
+            'status_kbps': status_kbps,
+            'icon': icon,
+            'status': status,
+            'timestamp': duration - position,
+            'paused': paused
+        }
+
+        client.update_activity(update_presence(data))
 
         time.sleep(15)
 
