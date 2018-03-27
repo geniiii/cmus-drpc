@@ -36,7 +36,7 @@ def update_presence(data: dict):
 
 def loop_check(loop: str):
     if loop == 'None':
-        loop = False
+        loop = None
     elif loop == 'Track':
         loop = 'Looping Track'
     else:
