@@ -44,8 +44,8 @@ def loop_check(loop: str):
     return loop
 
 
-def status_kbps_string(loop, kbps: int, status: str):
-    stuff = list(filter(None.__ne__, [loop, kbps, status]))
+def status_kbps_string(loop, kbps, status):
+    stuff = list(filter(None.__ne__, [status, kbps, loop]))
     stuff = [str(i) for i in stuff]
 
     status_kbps = ', '.join(stuff)
