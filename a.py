@@ -67,6 +67,8 @@ def artist_string(artists):
 
 
 def main():
+    old_data = {}
+    client = ipc.DiscordIPC('407579153060331521')
     bus = SessionBus()
 
     while True:
@@ -133,9 +135,6 @@ def main():
         artist_track = '{} - {}'.format(artist, track)
         status_kbps = status_kbps_string(loop, kbps, status)
 
-        client = ipc.DiscordIPC('407579153060331521')
-        client.connect()
-
         if status == 'Paused':
             icon = 'paused'
 
@@ -148,9 +147,13 @@ def main():
             'paused': paused
         }
 
-        client.update_activity(update_presence(data))
-
-        time.sleep(15)
+        if data != old_data:
+            client.connect()
+            client.update_activity(update_presence(data))
+            old_data = data
+            time.sleep(15)
+        else:
+            time.sleep(5)
 
 
 if __name__ == '__main__':
