@@ -99,11 +99,9 @@ def main():
 
         paused = False
         icon = 'playing'
-        duration = 0
-        position = 0
 
         try:
-            if metadata['mpris:length'] != duration and status != 'Paused':
+            if status != 'Paused':
                 duration = int(
                     time.time() + metadata['mpris:length'] / 1000000)
                 position = int(time.time() + remote_object.Position / 1000000)
@@ -121,6 +119,7 @@ def main():
             kbps = '{} kbps'.format(str(metadata['cmus:bitrate'])[:-3])
         except KeyError:
             print("hey!! your cmus version isn't my fork!!")
+            return
 
         try:
             if config['artist'] == False:
