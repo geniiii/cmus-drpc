@@ -12,7 +12,7 @@ import json
 
 
 def update_presence(data: dict):
-    if data['timestamp'] is False:
+    if data['paused'] is True:
         timestamp = {}
     else:
         timestamp = {
@@ -95,6 +95,7 @@ def main():
         paused = False
         icon = 'playing'
         duration = 0
+        position = 0
 
         try:
             if metadata['mpris:length'] != duration and status != 'Paused':
