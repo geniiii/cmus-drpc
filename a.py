@@ -1,12 +1,14 @@
 #!/bin/python3
 from discoIPC import ipc
 from pydbus import SessionBus
-from gi.repository.GLib import Error
-from os import path
 
 import subprocess
 import datetime
 import time
+
+from gi.repository.GLib import Error
+from os import path
+import json
 
 
 def update_presence(data: dict):
@@ -43,10 +45,10 @@ def loop_check(loop: str):
 
 
 def status_kbps_string(loop, kbps: int, status: str):
-    if loop != False:
-        status_kbps = '{}, {}, {}'.format(status, kbps, loop)
-    else:
-        status_kbps = '{}, {}'.format(status, kbps)
+    stuff = list(filter(None.__ne__, [loop, kbps, status]))
+    stuff = [str(i) for i in stuff]
+
+    status_kbps = ', '.join(stuff)
     return status_kbps
 
 
@@ -80,9 +82,15 @@ def main():
                 time.sleep(10)
                 continue
 
+        with open('config.json') as json_data:
+            config = json.load(json_data)
+
         metadata = remote_object.Metadata
         status = remote_object.PlaybackStatus
-        loop = loop_check(remote_object.LoopStatus)
+        if config['loop'] == True:
+            loop = loop_check(remote_object.LoopStatus)
+        else:
+            loop = None
 
         paused = False
         icon = 'playing'
@@ -101,17 +109,23 @@ def main():
             continue
 
         try:
+            if config['kbps'] == False:
+                kbps = None
+                return
             kbps = '{} kbps'.format(str(metadata['cmus:bitrate'])[:-3])
         except KeyError:
             print("hey!! your cmus version isn't my fork!!")
 
         try:
-            artist = artist_string(metadata['xesam:artists'])
+            if config['artist'] == False:
+                artist = None
+                return
+            artist = artist_string(metadata['xesam:artist'])
         except KeyError:
             artist = '?'
 
         try:
-            track = metadata['xesam:track']
+            track = metadata['xesam:title']
         except KeyError:
             track = song_file_path(metadata['cmus:file_path'])
 
