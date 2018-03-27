@@ -68,7 +68,10 @@ def artist_string(artists):
 
 def main():
     old_data = {}
+
     client = ipc.DiscordIPC('407579153060331521')
+    client.connect()
+
     bus = SessionBus()
 
     while True:
@@ -148,7 +151,6 @@ def main():
         }
 
         if data != old_data:
-            client.connect()
             client.update_activity(update_presence(data))
             old_data = data
             time.sleep(15)
