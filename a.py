@@ -104,9 +104,10 @@ def main():
             if status != 'Paused':
                 duration = int(
                     time.time() + metadata['mpris:length'] / 1000000)
-                position = int(time.time() + remote_object.Position / 1000000)
             elif status == 'Paused':
                 paused = True
+                duration = 0
+            position = int(time.time() + remote_object.Position / 1000000)
         except KeyError:
             print('no song is playing or timing failed, sleeping for 5 seconds...')
             time.sleep(5)
