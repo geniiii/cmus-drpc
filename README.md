@@ -7,3 +7,6 @@ python3 a.py
 
 ## extra stuff
 make sure you're using my cmus fork if u want more Gamer Features
+
+## preview
+![preview](preview.png)
