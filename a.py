@@ -116,24 +116,28 @@ def main():
         try:
             if config['kbps'] == False:
                 kbps = None
-                return
-            kbps = '{} kbps'.format(str(metadata['cmus:bitrate'])[:-3])
+            else:
+                kbps = '{} kbps'.format(str(metadata['cmus:bitrate'])[:-3])
         except KeyError:
-            print("hey!! your cmus version isn't my fork!!")
-            return
+            print(
+                "hey!! your cmus version isn't my fork.. whatever, continuing..")
+            kbps = None
 
         try:
             if config['artist'] == False:
                 artist = None
-                return
-            artist = artist_string(metadata['xesam:artist'])
+            else:
+                artist = artist_string(metadata['xesam:artist'])
         except KeyError:
             artist = '?'
 
         try:
             track = metadata['xesam:title']
         except KeyError:
-            track = song_file_path(metadata['cmus:file_path'])
+            try:  # god has left us
+                track = song_file_path(metadata['cmus:file_path'])
+            except KeyError:
+                track = '?'
 
         artist_track = '{} - {}'.format(artist, track)
         status_kbps = status_kbps_string(loop, kbps, status)
