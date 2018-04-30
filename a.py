@@ -92,7 +92,7 @@ def main():
 
         metadata = remote_object.Metadata
         status = remote_object.PlaybackStatus
-        if config['loop'] != True:
+        if config['loop'] == True:
             loop = loop_check(remote_object.LoopStatus)
         else:
             loop = None
