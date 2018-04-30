@@ -10,9 +10,12 @@ from gi.repository.GLib import Error
 from os import path
 import json
 
+with open('config.json') as json_data:
+    config = json.load(json_data)
+
 
 def update_presence(data: dict):
-    if data['paused'] is True:
+    if data['paused'] is True or config['timestamp'] == 'off' or config['timestamp'] == 'status':
         timestamp = {}
     else:
         timestamp = {
@@ -40,12 +43,12 @@ def loop_check(loop: str):
     elif loop == 'Track':
         loop = 'Looping Track'
     else:
-        loop = 'Looping Playlist'
+        loop = 'Looping Playlist/Library'
     return loop
 
 
-def status_kbps_string(loop, kbps, status):
-    stuff = list(filter(None.__ne__, [status, kbps, loop]))
+def status_string(loop, kbps, status, timestamp):
+    stuff = list(filter(None.__ne__, [status, kbps, loop, timestamp]))
     stuff = [str(i) for i in stuff]
 
     status_kbps = ', '.join(stuff)
@@ -87,12 +90,9 @@ def main():
                 time.sleep(10)
                 continue
 
-        with open('config.json') as json_data:
-            config = json.load(json_data)
-
         metadata = remote_object.Metadata
         status = remote_object.PlaybackStatus
-        if config['loop'] == True:
+        if config['loop'] != True:
             loop = loop_check(remote_object.LoopStatus)
         else:
             loop = None
@@ -100,14 +100,22 @@ def main():
         paused = False
         icon = 'playing'
 
+        timestamp = None
+
         try:
-            if status != 'Paused':
+            position = int(time.time() + remote_object.Position / 1000000)
+            if config['timestamp'] == 'status':
+                duration = str(datetime.timedelta(
+                    microseconds=int(metadata['mpris:length'])))
+                position = str(datetime.timedelta(
+                    microseconds=int(remote_object.Position)))
+            elif status != 'Paused':
                 duration = int(
                     time.time() + metadata['mpris:length'] / 1000000)
+                timestamp = duration - position
             elif status == 'Paused':
                 paused = True
                 duration = 0
-            position = int(time.time() + remote_object.Position / 1000000)
         except KeyError:
             print('no song is playing or timing failed, sleeping for 5 seconds...')
             time.sleep(5)
@@ -140,17 +148,21 @@ def main():
                 track = '?'
 
         artist_track = '{} - {}'.format(artist, track)
-        status_kbps = status_kbps_string(loop, kbps, status)
+        if config["timestamp"] == "status":
+            status_thing = status_string(
+                loop, kbps, status, "{}/{}".format(position, duration))
+        else:
+            status_thing = status_string(loop, kbps, status, None)
 
         if status == 'Paused':
             icon = 'paused'
 
         data = {
             'artist_track': artist_track,
-            'status_kbps': status_kbps,
+            'status_kbps': status_thing,
             'icon': icon,
             'status': status,
-            'timestamp': duration - position,
+            'timestamp': timestamp,
             'paused': paused
         }
 
