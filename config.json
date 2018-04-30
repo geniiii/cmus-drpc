@@ -2,5 +2,6 @@
     "loop": false,
     "kbps": true,
     "artist": true,
-    "timestamp": true
+    "timestamp": true,
+    "skip_data_checks_hack": false
 }
