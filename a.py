@@ -15,7 +15,7 @@ with open('config.json') as json_data:
 
 
 def update_presence(data: dict):
-    if data['paused'] is True or config['timestamp'] == 'off' or config['timestamp'] == 'status':
+    if data['paused'] is True or config['timestamp'] is False or config['timestamp'] == 'status':
         timestamp = {}
     else:
         timestamp = {
@@ -166,7 +166,7 @@ def main():
             'paused': paused
         }
 
-        if data != old_data:
+        if data != old_data or config['skip_data_checks_hack'] is True:
             client.update_activity(update_presence(data))
             old_data = data
             time.sleep(15)
